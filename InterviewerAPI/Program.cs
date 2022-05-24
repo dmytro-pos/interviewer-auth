@@ -8,8 +8,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 #region Predefined variables
 
 string dbConnectionString = builder?.Configuration["MSSQL:ConnectionString"];
