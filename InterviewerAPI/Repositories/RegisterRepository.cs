@@ -1,18 +1,19 @@
 ﻿using InterviewerAPI.DbModels;
+using InterviewerAPI.Interfaces.Helpers;
 using InterviewerAPI.Interfaces.Repositories;
 using InterviewerAPI.Models.AuthModels;
 using InterviewerAPI.Models.AuthModels.AuthEnums;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace InterviewerAPI.Repositories
 {
     public class RegisterRepository : IRegisterRepository
     {
         private readonly InterviewerAuthDbContext _authDbContext;
-        public RegisterRepository(InterviewerAuthDbContext authDbContext)
+        private readonly IAuthHelper _authHelper;
+        public RegisterRepository(InterviewerAuthDbContext authDbContext, IAuthHelper authHelper)
         {
             _authDbContext = authDbContext;
+            _authHelper = authHelper;
         }
 
         public void RegisterAdministratorAccount(AdminAccountRegisterRequestModel adminAccountRegisterRequestModel)
@@ -39,28 +40,10 @@ namespace InterviewerAPI.Repositories
                 UserRole = (int)UserRolesEnum.Admin,
                 DateOfProfileCreation = DateTime.UtcNow,
                 Salt = salt.ToString(),
-                UserPassword = CreateSaltedPasswordHash(administratorAccountRegisterModel.Password + salt)
+                UserPassword = _authHelper.CreateSaltedPasswordHash(administratorAccountRegisterModel.Password + salt)
             };
             _authDbContext.UsersAccounts.Add(userAccount);
             _authDbContext.SaveChangesAsync();
-        }
-
-        private string CreateSaltedPasswordHash(string saltedPassword)
-        {
-            byte[] hash;
-            using (MD5 md5 = MD5.Create())
-            {
-                hash = md5.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword));
-            }
-
-            string a = BitConverter.ToString(hash);
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.Length; i++)
-            {
-                sb.Append(hash[i].ToString("X2"));
-            }
-            return sb.ToString();
         }
 
         #endregion

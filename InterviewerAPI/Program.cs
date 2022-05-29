@@ -1,4 +1,6 @@
 using InterviewerAPI.DbModels;
+using InterviewerAPI.Helpers;
+using InterviewerAPI.Interfaces.Helpers;
 using InterviewerAPI.Interfaces.Repositories;
 using InterviewerAPI.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,16 +28,29 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<InterviewerAuthDbContext>(options => options.UseSqlServer(dbConnectionString));
 builder.Services.AddEndpointsApiExplorer();
 
+#region Repositories injection
+
 builder.Services.AddTransient<IAuthRepository, AuthRepository>((sp) =>
 {
-    return new AuthRepository(secretKey, issuer, audience,
-        accessTokenExpirationTimeInMinutes, refreshTokenExpirationTimeInDays, sp.GetService<InterviewerAuthDbContext>());
+    return new AuthRepository(refreshTokenExpirationTimeInDays,
+        sp.GetService<InterviewerAuthDbContext>(), sp.GetService<IAuthHelper>());
 });
 
 builder.Services.AddTransient<IRegisterRepository, RegisterRepository>((sp) =>
 {
-    return new RegisterRepository(sp.GetService<InterviewerAuthDbContext>());
+    return new RegisterRepository(sp.GetService<InterviewerAuthDbContext>(), sp.GetService<IAuthHelper>());
 });
+
+#endregion
+
+#region Helpers injection
+
+builder.Services.AddTransient<IAuthHelper>((sp) => 
+{
+    return new AuthHelper(secretKey, issuer, audience, accessTokenExpirationTimeInMinutes);
+});
+
+#endregion
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
