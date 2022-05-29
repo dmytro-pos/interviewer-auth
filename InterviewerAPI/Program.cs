@@ -14,7 +14,8 @@ string dbConnectionString = builder?.Configuration["MSSQL:ConnectionString"];
 string secretKey = builder.Configuration["JwtToken:SecretKey"];
 string issuer = builder?.Configuration["JwtToken:Issuer"];
 string audience = builder?.Configuration["JwtToken:Audience"];
-int tokenExpireTimeInMinutes = int.Parse(builder?.Configuration["JwtToken:TokenExpirationInMinutes"]);
+int accessTokenExpirationTimeInMinutes = int.Parse(builder?.Configuration["JwtToken:AccessTokenExpirationTimeInMinutes"]);
+int refreshTokenExpirationTimeInDays = int.Parse(builder?.Configuration["JwtToken:RefreshTokenExpirationTimeInDays"]);
 string possiblesCharsForSaltGenerator = builder?.Configuration["Security:PossiblesCharsForSaltGenerator"];
 
 #endregion
@@ -28,7 +29,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddTransient<IAuthRepository, AuthRepository>((sp) =>
 {
     return new AuthRepository(secretKey, issuer, audience,
-        tokenExpireTimeInMinutes, sp.GetService<InterviewerAuthDbContext>());
+        accessTokenExpirationTimeInMinutes, refreshTokenExpirationTimeInDays, sp.GetService<InterviewerAuthDbContext>());
 });
 
 builder.Services.AddTransient<IRegisterRepository, RegisterRepository>((sp) =>
@@ -62,6 +63,7 @@ var app = builder.Build();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

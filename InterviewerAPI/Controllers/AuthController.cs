@@ -1,17 +1,15 @@
 using InterviewerAPI.Interfaces.Repositories;
 using InterviewerAPI.Models.AuthModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Authentication;
 
 namespace InterviewerAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]/")]
+    [Route("")]
     public class AuthController : ControllerBase
     {
-        [HttpPost("token")]
-        public IActionResult GetToken([FromBody] UserLoginModel userLoginModel, [FromServices] IAuthRepository authRepository)
+        [HttpPost("authenticate")]
+        public IActionResult AuthenticateUser([FromBody] UserLoginRequestModel userLoginModel, [FromServices] IAuthRepository authRepository)
         {
             try
             {

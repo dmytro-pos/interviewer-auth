@@ -21,16 +21,16 @@ namespace InterviewerAPI.Controllers
         [Authorize(Roles = "Owner, Admin")]
         public IActionResult GetTokesn()
         {
-            return Ok("You're owner or admin");
+            return Ok("Owner: " + User.IsInRole("Owner").ToString() + " " + "Admin: " + User.IsInRole("Admin").ToString());
         }
 
         [HttpPost("admin")]
-        public IActionResult GetToken([FromBody] AdministratorAccountRegisterModel administratorAccountRegisterModel,
+        public IActionResult GetToken([FromBody] AdminAccountRegisterRequestModel adminAccountRegisterRequestModel,
             [FromServices] IRegisterRepository registerRepository)
         {
             try
             {
-                registerRepository.RegisterAdministratorAccount(administratorAccountRegisterModel);
+                registerRepository.RegisterAdministratorAccount(adminAccountRegisterRequestModel);
                 return Ok("User was succesfully created");
             }
             catch (Exception ex)

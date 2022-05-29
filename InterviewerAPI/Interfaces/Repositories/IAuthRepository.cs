@@ -4,6 +4,6 @@ namespace InterviewerAPI.Interfaces.Repositories
 {
     public interface IAuthRepository
     {
-        string GetToken(UserLoginModel userLoginModel);
+        AuthenticationResponseModel GetToken(UserLoginRequestModel userLoginModel);
     }
 }

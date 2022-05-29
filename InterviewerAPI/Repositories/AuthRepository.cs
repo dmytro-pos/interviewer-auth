@@ -16,33 +16,36 @@ namespace InterviewerAPI.Repositories
         private readonly string _secretKey;
         private readonly string _issuer;
         private readonly string _audience;
-        private readonly int _expireTimeInMinutes;
+        private readonly int _accessTokenExpirationTimeInMinutes;
+        private readonly int _refreshTokenExpirationTimeInDays;
         private readonly InterviewerAuthDbContext _authDbContext;
 
-        public AuthRepository(string secretKey, string issuer, string audience, int expireTimeInMinutes,
-        InterviewerAuthDbContext authDbContext)
+        public AuthRepository(string secretKey, string issuer, string audience, int accessTokenExpirationTimeInMinutes,
+        int refreshTokenExpirationTimeInDays, InterviewerAuthDbContext authDbContext)
         {
             _secretKey = secretKey;
             _issuer = issuer;
             _audience = audience;
-            _expireTimeInMinutes = expireTimeInMinutes;
+            _accessTokenExpirationTimeInMinutes = accessTokenExpirationTimeInMinutes;
             _authDbContext = authDbContext;
+            _refreshTokenExpirationTimeInDays = refreshTokenExpirationTimeInDays;
         }
 
-        public string GetToken(UserLoginModel userLoginModel)
+        public AuthenticationResponseModel GetToken(UserLoginRequestModel userLoginModel)
         {
             var user = GetUserAccount(userLoginModel);
             if (user == null)
                 throw new UnauthorizedAccessException("Specified user does not exist");
 
-            string token = CreateToken(user);
+            string accessToken = CreateAccessToken(user);
+            string refreshToken = CreateRefreshToken(user.AccountGlobalIdentifier);
 
-            return token;
+            return new AuthenticationResponseModel() { AccessToken = accessToken, RefreshToken = refreshToken };
         }
 
         #region Helper Methods
 
-        private UserAccountModel GetUserAccount(UserLoginModel userLoginModel)
+        private UserAccountModel GetUserAccount(UserLoginRequestModel userLoginModel)
         {
             var user = _authDbContext.UsersAccounts.SingleAsync(u => u.UserEmail == userLoginModel.UserLogin).Result;
 
@@ -57,13 +60,14 @@ namespace InterviewerAPI.Repositories
             var userAccountModel = new UserAccountModel()
             {
                 UserEmail = user.UserEmail,
-                UserRole = (UserRolesEnum)user.UserRole
+                UserRole = (UserRolesEnum)user.UserRole,
+                AccountGlobalIdentifier = user.AccountGlobalIdentifier
             };
 
             return userAccountModel;
         }
 
-        private string CreateToken(UserAccountModel userAccountModel)
+        private string CreateAccessToken(UserAccountModel userAccountModel)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
@@ -75,9 +79,10 @@ namespace InterviewerAPI.Repositories
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Email, userAccountModel.UserEmail),
-                    new Claim(ClaimTypes.Role, userAccountModel.UserRole.ToString())
+                    new Claim(ClaimTypes.Role, userAccountModel.UserRole.ToString()),
+                    new Claim(ClaimTypes.NameIdentifier, userAccountModel.AccountGlobalIdentifier.ToString())
                 }),
-                Expires = DateTime.Now.AddMinutes(_expireTimeInMinutes),
+                Expires = DateTime.Now.AddMinutes(_accessTokenExpirationTimeInMinutes),
                 Issuer = _issuer,
                 Audience = _audience,
                 SigningCredentials = credentials
@@ -86,6 +91,45 @@ namespace InterviewerAPI.Repositories
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
             return tokenHandler.WriteToken(token);
+        }
+
+        private string CreateRefreshToken(Guid accountGlobalIdentifier) 
+        {
+            var randomNumber = new byte[32];
+            string refreshToken = "";
+
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                refreshToken = Convert.ToBase64String(randomNumber);
+            }
+
+            DateTime refreshTokenCreatedDate = DateTime.UtcNow;
+            DateTime refreshTokenExpirationDate = DateTime.Now.AddDays(_refreshTokenExpirationTimeInDays);
+
+            var refreshTokenModel = new RefreshToken() 
+            {
+                AccountGlobalIdentifier = accountGlobalIdentifier,
+                CreatedDate = refreshTokenCreatedDate,
+                ExpirationDate = refreshTokenExpirationDate,
+                RefreshToken1 = refreshToken
+            };
+
+            var refreshTokenFromDb = _authDbContext.RefreshTokens.SingleOrDefaultAsync(t =>
+            t.AccountGlobalIdentifier == accountGlobalIdentifier && t.ExpirationDate > DateTime.Now).Result;
+
+            if (refreshTokenFromDb == null)
+                _authDbContext.RefreshTokens.Add(refreshTokenModel);
+            else
+            {
+                refreshTokenFromDb.RefreshToken1 = refreshToken;
+                refreshTokenFromDb.CreatedDate = refreshTokenCreatedDate;
+                refreshTokenFromDb.ExpirationDate = refreshTokenExpirationDate;
+            }
+
+            _authDbContext.SaveChangesAsync();
+            
+            return refreshToken;
         }
 
         private string CreateSaltedPasswordHash(string saltedPassword)

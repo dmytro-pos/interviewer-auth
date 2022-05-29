@@ -15,10 +15,10 @@ namespace InterviewerAPI.Repositories
             _authDbContext = authDbContext;
         }
 
-        public void RegisterAdministratorAccount(AdministratorAccountRegisterModel administratorAccountRegisterModel)
+        public void RegisterAdministratorAccount(AdminAccountRegisterRequestModel adminAccountRegisterRequestModel)
         {
-            CheckIfUserAlreadyExist(administratorAccountRegisterModel.UserEmail);
-            AddAdministratorToDb(administratorAccountRegisterModel);
+            CheckIfUserAlreadyExist(adminAccountRegisterRequestModel.UserEmail);
+            AddAdministratorToDb(adminAccountRegisterRequestModel);
         }
 
         #region Helper Methods
@@ -30,7 +30,7 @@ namespace InterviewerAPI.Repositories
                 throw new ArgumentException("User with specified email already exist");
         }
 
-        private void AddAdministratorToDb(AdministratorAccountRegisterModel administratorAccountRegisterModel)
+        private void AddAdministratorToDb(AdminAccountRegisterRequestModel administratorAccountRegisterModel)
         {
             Guid salt = Guid.NewGuid();
             var userAccount = new UsersAccount()

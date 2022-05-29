@@ -15,6 +15,7 @@ namespace InterviewerAPI.DbModels
         {
         }
 
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public virtual DbSet<UsersAccount> UsersAccounts { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -27,6 +28,22 @@ namespace InterviewerAPI.DbModels
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(e => e.AccountGlobalIdentifier);
+
+                entity.Property(e => e.AccountGlobalIdentifier).ValueGeneratedNever();
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
+
+                entity.Property(e => e.RefreshToken1)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("RefreshToken");
+            });
+
             modelBuilder.Entity<UsersAccount>(entity =>
             {
                 entity.HasKey(e => e.AccountGlobalIdentifier);

@@ -8,5 +8,6 @@ namespace InterviewerAPI.Models.AuthModels
         public string? Salt { get; set; }
         public UserRolesEnum UserRole { get; set; }
         public DateTime DateOfProfileCreation { get; set; }
+        public Guid AccountGlobalIdentifier { get; set; }
     }
 }
