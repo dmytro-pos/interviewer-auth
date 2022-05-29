@@ -1,6 +1,5 @@
 ﻿using InterviewerAPI.Interfaces.Repositories;
 using InterviewerAPI.Models.AuthModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InterviewerAPI.Controllers
@@ -10,7 +9,7 @@ namespace InterviewerAPI.Controllers
     public class RegisterController : ControllerBase
     {
         [HttpPost("admin")]
-        public IActionResult GetToken([FromBody] AdminAccountRegisterRequestModel adminAccountRegisterRequestModel,
+        public IActionResult RegisterAdminAccount([FromBody] AdminAccountRegisterRequestModel adminAccountRegisterRequestModel,
             [FromServices] IRegisterRepository registerRepository)
         {
             try
