@@ -9,21 +9,6 @@ namespace InterviewerAPI.Controllers
     [Route("[controller]/")]
     public class RegisterController : ControllerBase
     {
-
-        [HttpGet("owner")]
-        [Authorize(Roles = "Owner")]
-        public IActionResult GetToken()
-        {
-            return Ok("You're owner");
-        }
-
-        [HttpGet("adminAndOwner")]
-        [Authorize(Roles = "Owner, Admin")]
-        public IActionResult GetTokesn()
-        {
-            return Ok("Owner: " + User.IsInRole("Owner").ToString() + " " + "Admin: " + User.IsInRole("Admin").ToString());
-        }
-
         [HttpPost("admin")]
         public IActionResult GetToken([FromBody] AdminAccountRegisterRequestModel adminAccountRegisterRequestModel,
             [FromServices] IRegisterRepository registerRepository)
