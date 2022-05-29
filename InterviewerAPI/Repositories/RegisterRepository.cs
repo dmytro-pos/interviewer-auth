@@ -37,7 +37,7 @@ namespace InterviewerAPI.Repositories
             {
                 UserEmail = administratorAccountRegisterModel.UserEmail,
                 UserRole = (int)UserRolesEnum.Admin,
-                DateOfProfileCreation = DateTime.Now,
+                DateOfProfileCreation = DateTime.UtcNow,
                 Salt = salt.ToString(),
                 UserPassword = CreateSaltedPasswordHash(administratorAccountRegisterModel.Password + salt)
             };
